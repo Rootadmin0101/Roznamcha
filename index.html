@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>دفتر فروش</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Tahoma,Arial,sans-serif;background:#f0f4f8;direction:rtl;min-height:100vh;overflow-x:hidden;}
+header{background:#1a5276;color:white;padding:12px 16px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,.3);}
+header h1{font-size:17px;}
+
+/* نوار تاریخ شبیه به دفترچه */
+.date-bar{background:#154360;color:white;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:45px;z-index:90;box-shadow:0 2px 4px rgba(0,0,0,.2);}
+.nav-btn{background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:6px 14px;font-size:16px;cursor:pointer;}
+.nav-btn:active{background:rgba(255,255,255,0.3);}
+.date-label{font-size:14px;font-weight:bold;text-align:center;flex:1;cursor:pointer;}
+.date-label span{display:block;font-size:11px;opacity:0.7;font-weight:normal;margin-top:2px;}
+
+.summary{display:flex;gap:8px;padding:10px 12px;background:#eaf2f8;}
+.card{flex:1;background:white;border-radius:10px;padding:8px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.card .label{font-size:11px;color:#888;margin-bottom:3px;}
+.card .value{font-size:16px;font-weight:bold;}
+.card.price .value{color:#1a5276;}
+.card.profit .value{color:#1e8449;}
+
+.main-content{padding:0 8px 10px;min-height:50vh; transition: transform 0.2s ease;}
+.table-wrap{background:white;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,.08);overflow:hidden;margin-top:10px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:#d6eaf8;color:#1a3a5c;padding:9px 4px;text-align:center;font-size:12px;border-bottom:2px solid #acd;}
+thead th.name-col{text-align:right;padding-right:8px;}
+tbody td{padding:9px 4px;text-align:center;border-bottom:1px solid #f0f0f0;color:#333;}
+tbody td.name-cell{text-align:right;padding-right:8px;font-size:13px;color:#222;}
+tbody tr:last-child td{border-bottom:none;}
+.profit-cell{color:#1e8449;font-weight:bold;}
+.price-cell{color:#1a5276;}
+.del-btn{background:#f9ebea;border:1px solid #e6b0aa;color:#c0392b;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;}
+tfoot td{padding:8px 4px;background:#eaf2f8;font-weight:bold;text-align:center;border-top:2px solid #acd;}
+
+.empty-msg{text-align:center;color:#888;padding:40px 20px;font-size:14px;line-height:1.8;}
+.empty-msg span{font-size:30px;display:block;margin-bottom:10px;}
+
+.bottom-btns{margin:15px 8px 85px; display:flex; gap:8px;}
+.backup-btn{flex:1;background:#fff;color:#7d6608;border:1.5px solid #d4ac0d;border-radius:8px;padding:10px;font-size:14px;font-weight:bold;cursor:pointer;font-family:Tahoma,Arial,sans-serif;}
+.report-btn{flex:1;background:#fff;color:#1a5276;border:1.5px solid #1a5276;border-radius:8px;padding:10px;font-size:14px;font-weight:bold;cursor:pointer;font-family:Tahoma,Arial,sans-serif;}
+
+.add-form{position:fixed;bottom:0;left:0;right:0;background:white;border-top:2px solid #1a5276;padding:8px 10px;display:flex;gap:6px;align-items:center;z-index:200;box-shadow:0 -2px 10px rgba(0,0,0,.15);}
+.add-form input{flex:1;border:1px solid #bcd;border-radius:8px;padding:9px 6px;font-size:14px;font-family:Tahoma,Arial,sans-serif;text-align:center;background:#f7fbff;min-width:0;}
+.add-form input#inName{flex:1.6;text-align:right;padding-right:8px;}
+.add-form input::placeholder{font-size:11px;color:#aaa;}
+.add-btn{background:#1a5276;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:20px;cursor:pointer;flex-shrink:0;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:white;border-radius:14px;padding:20px;margin:16px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal h3{color:#1a5276;margin-bottom:12px;font-size:16px;text-align:center;}
+.modal-btns{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+.modal-btns button{flex:1;min-width:80px;padding:10px 6px;border-radius:8px;border:none;font-size:13px;cursor:pointer;font-family:Tahoma,Arial,sans-serif;}
+.btn-pdf{background:#1a5276;color:white;}
+.btn-excel{background:#1e8449;color:white;}
+.btn-cancel{background:#eee;color:#333;}
+.btn-danger{background:#c0392b;color:white;}
+
+/* گزارشات Modal */
+.stat-box{background:#f4f6f7;border:1px solid #d5dbdb;border-radius:8px;padding:12px;margin-bottom:10px;text-align:center;}
+.stat-box .title{font-size:11px;color:#555;}
+.stat-box .val{font-size:18px;font-weight:bold;color:#1a5276;margin-top:4px;}
+.filter-row{display:flex;align-items:center;gap:10px;margin:15px 0;}
+.filter-row select{flex:1;padding:8px;border-radius:6px;border:1px solid #ccc;font-family:Tahoma;}
+
+.edit-field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.edit-field label{font-size:12px;color:#555;}
+.edit-field input{border:1px solid #bcd;border-radius:8px;padding:8px 10px;font-size:14px;font-family:Tahoma;}
+</style>
+<link rel="manifest" href="./manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+  }
+</script>
+</head>
+<body>
+
+<header>
+  <h1>📒 دفتر فروش</h1>
+</header>
+
+<div class="date-bar">
+  <button class="nav-btn" onclick="nextDay()">◀</button>
+  <div class="date-label" id="dateLabel" onclick="goToday()" title="بازگشت به امروز"></div>
+  <button class="nav-btn" onclick="prevDay()">▶</button>
+</div>
+
+<div class="summary">
+  <div class="card price"><div class="label">جمع قیمت (این صفحه)</div><div class="value" id="todayPrice">۰</div></div>
+  <div class="card profit"><div class="label">جمع سود (این صفحه)</div><div class="value" id="todayProfit">۰</div></div>
+</div>
+
+<div id="mainContent" class="main-content">
+  <div class="table-wrap" id="tableWrap"></div>
+</div>
+
+<div class="bottom-btns">
+  <button class="report-btn" onclick="openReportModal()">📊 گزارشات و خروجی</button>
+  <button class="backup-btn" onclick="openBackupModal()">💾 بک‌آپ / بازیابی</button>
+</div>
+
+<div class="add-form">
+  <input type="text" id="inName" placeholder="اسم جنس">
+  <input type="number" id="inPrice" placeholder="قیمت" inputmode="numeric">
+  <input type="number" id="inProfit" placeholder="سود" inputmode="numeric">
+  <button class="add-btn" onclick="addRow()">+</button>
+</div>
+
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <h3>📊 داشبورد گزارشات</h3>
+    
+    <div class="filter-row">
+      <label style="font-size:12px;">انتخاب ماه:</label>
+      <select id="reportMonthSelect" onchange="updateReportStats()"></select>
+    </div>
+
+    <div class="stat-box">
+      <div class="title">تعداد کل اجناس فروخته شده</div>
+      <div class="val" id="statTotalItems">۰</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="stat-box" style="flex:1">
+        <div class="title">مجموع درآمد</div>
+        <div class="val" id="statTotalPrice">۰</div>
+      </div>
+      <div class="stat-box" style="flex:1">
+        <div class="title">مجموع سود</div>
+        <div class="val" style="color:#1e8449" id="statTotalProfit">۰</div>
+      </div>
+    </div>
+
+    <div class="modal-btns" style="margin-top:20px;">
+      <button class="btn-excel" onclick="exportExcel()">📉 دانلود اکسل</button>
+      <button class="btn-pdf" onclick="printMultiPage()">🖨 چاپ / PDF</button>
+      <button class="btn-cancel" onclick="closeReportModal()">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="backupModal">
+  <div class="modal">
+    <h3>💾 مدیریت اطلاعات</h3>
+    <p style="text-align:center;font-size:12px;margin-bottom:15px;">برای جلوگیری از از دست رفتن اطلاعات، فایل بک‌آپ بگیرید.</p>
+    <div class="modal-btns">
+      <button class="btn-pdf" onclick="doBackup()">💾 دریافت فایل بک‌آپ</button>
+      <button class="backup-btn" onclick="triggerRestore()">📂 بازگردانی فایل</button>
+      <button class="btn-danger" onclick="confirmClearAll()">🗑 پاک کردن همه</button>
+      <button class="btn-cancel" onclick="closeBackup()">بستن</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>✏️ ویرایش ردیف</h3>
+    <div class="edit-field"><label>اسم جنس:</label><input type="text" id="editName"></div>
+    <div class="edit-field"><label>قیمت:</label><input type="number" id="editPrice" inputmode="numeric"></div>
+    <div class="edit-field"><label>سود:</label><input type="number" id="editProfit" inputmode="numeric"></div>
+    <div class="modal-btns">
+      <button class="btn-pdf" onclick="saveEdit()">✅ ذخیره</button>
+      <button class="btn-danger" onclick="deleteCurrentEdit()">🗑 حذف</button>
+      <button class="btn-cancel" onclick="closeEdit()">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">⚠️ تأیید</h3>
+    <p id="confirmMsg" style="text-align:center;color:#555;font-size:13px;margin:10px 0;line-height:1.7;"></p>
+    <div class="modal-btns">
+      <button class="btn-danger" id="confirmOkBtn">بله</button>
+      <button class="btn-cancel" onclick="closeConfirm()">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="restoreInput" accept=".json" style="display:none" onchange="doRestore(this)">
+
+<script>
+// ── CONSTANTS ──
+const MN=['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
+const DN=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
+
+// ── HELPERS ──
+function toFa(n){return String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);}
+function fmtN(n){return toFa(Number(n).toLocaleString('en'));}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// تبدیل میلادی به شمسی
+function toJalali(gy,gm,gd){
+  var g_y=gy-1600,g_m=gm-1,g_d=gd-1,i,gdn,jdn,jnp;
+  gdn=365*g_y+Math.floor((g_y+3)/4)-Math.floor((g_y+99)/100)+Math.floor((g_y+399)/400);
+  for(i=0;i<g_m;i++)gdn+=[31,((g_y%4==0&&g_y%100!=0)||(g_y%400==0))?29:28,31,30,31,30,31,31,30,31,30,31][i];
+  gdn+=g_d;jdn=gdn-79;jnp=Math.floor(jdn/12053);jdn%=12053;
+  var jy=979+33*jnp+4*Math.floor(jdn/1461);jdn%=1461;
+  if(jdn>=366){jy+=Math.floor((jdn-1)/365);jdn=(jdn-1)%365;}
+  for(i=0;i<11&&jdn>=(i<6?31:30);i++)jdn-=(i<6?31:30);
+  return[jy,i+1,jdn+1];
+}
+
+// ── STATE ──
+var records=JSON.parse(localStorage.getItem('hesab_v5')||'[]');
+var navDate = new Date(); // تاریخی که در حال مشاهده آن هستیم
+var currentDateStr = '';  // کلید تاریخ برای ذخیره (ماه/روز)
+
+function save(){localStorage.setItem('hesab_v5',JSON.stringify(records));}
+
+// ── INIT & NAVIGATION ──
+function updateNavDisplay(){
+  var jd = toJalali(navDate.getFullYear(), navDate.getMonth()+1, navDate.getDate());
+  currentDateStr = jd[1] + '/' + jd[2];
+  
+  var todayDate = new Date();
+  var isToday = (navDate.getDate()===todayDate.getDate() && navDate.getMonth()===todayDate.getMonth() && navDate.getFullYear()===todayDate.getFullYear());
+
+  document.getElementById('dateLabel').innerHTML = 
+    DN[navDate.getDay()] + ' ' + toFa(jd[2]) + ' ' + MN[jd[1]-1] + 
+    (isToday ? ' <span>(امروز)</span>' : ' <span>(برای بازگشت به امروز ضربه بزنید)</span>');
+  
+  render();
+}
+
+function prevDay(){ navDate.setDate(navDate.getDate()-1); updateNavDisplay(); }
+function nextDay(){ navDate.setDate(navDate.getDate()+1); updateNavDisplay(); }
+function goToday(){ navDate = new Date(); updateNavDisplay(); }
+
+// ── SWIPE LOGIC ──
+let touchstartX = 0;
+let touchendX = 0;
+document.getElementById('mainContent').addEventListener('touchstart', e => {
+  touchstartX = e.changedTouches[0].screenX;
+});
+document.getElementById('mainContent').addEventListener('touchend', e => {
+  touchendX = e.changedTouches[0].screenX;
+  if (touchendX < touchstartX - 50) nextDay(); // Swipe Left
+  if (touchendX > touchstartX + 50) prevDay(); // Swipe Right
+});
+
+// ── ADD ROW ──
+function addRow(){
+  var n=document.getElementById('inName').value.trim();
+  var p=document.getElementById('inPrice').value.trim();
+  var s=document.getElementById('inProfit').value.trim();
+  if(!n&&!p&&!s)return;
+  
+  // ثبت در تاریخی که روی صفحه است
+  records.push({date: currentDateStr, name: n||'—', price: p||'0', profit: s||'0', id: Date.now()});
+  save();
+  document.getElementById('inName').value='';
+  document.getElementById('inPrice').value='';
+  document.getElementById('inProfit').value='';
+  document.getElementById('inName').focus();
+  render();
+}
+
+// ── EDIT / DELETE ──
+var _editId=null;
+function openEdit(id){
+  var r=records.find(x=>x.id===id);if(!r)return;
+  _editId=id;
+  document.getElementById('editName').value=r.name==='—'?'':r.name;
+  document.getElementById('editPrice').value=r.price;
+  document.getElementById('editProfit').value=r.profit;
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEdit(){document.getElementById('editModal').classList.remove('show');_editId=null;}
+function saveEdit(){
+  var r=records.find(x=>x.id===_editId);if(!r)return;
+  r.name=document.getElementById('editName').value.trim()||'—';
+  r.price=document.getElementById('editPrice').value||'0';
+  r.profit=document.getElementById('editProfit').value||'0';
+  save();closeEdit();render();
+}
+function deleteCurrentEdit(){
+  var id = _editId;
+  closeEdit();
+  showConfirm('حذف ردیف','آیا از حذف این مورد مطمئن هستید؟',function(){
+    records=records.filter(x=>x.id!==id);save();render();
+  });
+}
+
+// ── CONFIRM MODAL ──
+var _confirmCb=null;
+function showConfirm(title,msg,cb){
+  document.getElementById('confirmTitle').textContent='⚠️ '+title;
+  document.getElementById('confirmMsg').textContent=msg;
+  _confirmCb=cb;
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('show');_confirmCb=null;}
+document.getElementById('confirmOkBtn').onclick=function(){if(_confirmCb)_confirmCb();closeConfirm();};
+
+function confirmClearAll(){
+  closeBackup();
+  showConfirm('پاک کردن همه','تمام اطلاعات پاک می‌شود و قابل بازیابی نیست. مطمئنی؟',function(){
+    records=[];save();render();
+  });
+}
+
+// ── BACKUP / RESTORE ──
+function openBackupModal(){document.getElementById('backupModal').classList.add('show');}
+function closeBackup(){document.getElementById('backupModal').classList.remove('show');}
+function doBackup(){
+  var blob=new Blob([JSON.stringify({v:5,records:records},null,2)],{type:'application/json'});
+  var jd=todayJ(); // نیاز به تابع todayJ داریم تا نام فایل مرتب باشد
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='backup_hesab_'+jd[0]+'_'+jd[1]+'_'+jd[2]+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  closeBackup();
+}
+function todayJ(){var d=new Date();return toJalali(d.getFullYear(),d.getMonth()+1,d.getDate());}
+function triggerRestore(){closeBackup();document.getElementById('restoreInput').value='';document.getElementById('restoreInput').click();}
+function doRestore(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var parsed=JSON.parse(e.target.result);
+      var arr=parsed.records||parsed;
+      if(!Array.isArray(arr))throw new Error('invalid');
+      showConfirm('بازیابی','اطلاعات فعلی با اطلاعات فایل جایگزین می‌شود. ادامه می‌دهید؟',function(){
+        records=arr;save();render();
+        alert('✅ بازیابی موفقیت آمیز بود.');
+      });
+    }catch(e){alert('❌ خطا: فایل معتبر نیست.');}
+  };
+  reader.readAsText(file);
+}
+
+// ── REPORTS & EXPORTS ──
+function openReportModal(){
+  var sel = document.getElementById('reportMonthSelect');
+  sel.innerHTML = '<option value="all">تمام ماه‌ها (کل اطلاعات)</option>';
+  var months = [...new Set(records.map(r=>r.date.split('/')[0]))].sort((a,b)=>a-b);
+  months.forEach(m => {
+    var opt = document.createElement('option');
+    opt.value = m; opt.text = 'ماه ' + MN[m-1];
+    sel.appendChild(opt);
+  });
+  updateReportStats();
+  document.getElementById('reportModal').classList.add('show');
+}
+function closeReportModal(){document.getElementById('reportModal').classList.remove('show');}
+
+function updateReportStats(){
+  var m = document.getElementById('reportMonthSelect').value;
+  var filtered = (m === 'all') ? records : records.filter(r => r.date.split('/')[0] === m);
+  
+  var totalItems = filtered.length;
+  var totalP = filtered.reduce((s,r)=>s+Number(r.price||0), 0);
+  var totalS = filtered.reduce((s,r)=>s+Number(r.profit||0), 0);
+
+  document.getElementById('statTotalItems').textContent = toFa(totalItems);
+  document.getElementById('statTotalPrice').textContent = fmtN(totalP);
+  document.getElementById('statTotalProfit').textContent = fmtN(totalS);
+}
+
+function exportExcel(){
+  var m = document.getElementById('reportMonthSelect').value;
+  var filtered = (m === 'all') ? records : records.filter(r => r.date.split('/')[0] === m);
+  if(filtered.length===0){ alert('رکوردی برای خروجی وجود ندارد.'); return; }
+  
+  var csv = 'تاریخ,اسم جنس,قیمت,سود\n';
+  filtered.forEach(r => {
+    // جلوگیری از بهم ریختگی متن در اکسل
+    var safeName = r.name ? r.name.replace(/"/g, '""') : '';
+    csv += `${r.date},"${safeName}",${r.price||0},${r.profit||0}\n`;
+  });
+  
+  var blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='Khoroji_Excel.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+function printMultiPage(){
+  var m = document.getElementById('reportMonthSelect').value;
+  var filtered = (m === 'all') ? records : records.filter(r => r.date.split('/')[0] === m);
+  if(filtered.length===0){ alert('رکوردی برای چاپ وجود ندارد.'); return; }
+
+  // گروه‌بندی بر اساس روز
+  var grp = {};
+  filtered.forEach(r => {
+    if(!grp[r.date]) grp[r.date] = [];
+    grp[r.date].push(r);
+  });
+
+  var pWin = window.open('', '_blank');
+  var html = `
+    <html dir="rtl">
+    <head>
+      <title>چاپ گزارش فروش</title>
+      <style>
+        body{font-family:Tahoma, Arial; color:#333;} 
+        .page-break{page-break-after:always; margin-bottom:30px;}
+        h2{text-align:center; background:#1a5276; color:white; padding:10px; border-radius:6px; font-size:16px;}
+        table{width:100%; border-collapse:collapse; margin-top:15px; font-size:13px;} 
+        th{background:#eaf2f8; padding:10px;}
+        th,td{border:1px solid #ccc; padding:8px; text-align:center;}
+        .name-col{text-align:right;}
+      </style>
+    </head>
+    <body>`;
+
+  for(var date in grp) {
+    var rows = grp[date];
+    var dM = date.split('/')[0], dD = date.split('/')[1];
+    var dP = rows.reduce((s,r)=>s+Number(r.price||0),0);
+    var dS = rows.reduce((s,r)=>s+Number(r.profit||0),0);
+
+    html += `<div class="page-break">
+        <h2>تاریخ: ${toFa(dD)} ${MN[dM-1]}</h2>
+        <table>
+            <thead><tr><th>ردیف</th><th class="name-col">نام جنس</th><th>قیمت</th><th>سود</th></tr></thead>
+            <tbody>`;
+    rows.forEach((r,i) => {
+        html += `<tr><td>${toFa(i+1)}</td><td class="name-col">${esc(r.name)}</td><td>${fmtN(r.price)}</td><td>${fmtN(r.profit)}</td></tr>`;
+    });
+    html += `</tbody>
+        <tfoot><tr><th colspan="2">جمع کل این روز</th><th>${fmtN(dP)}</th><th>${fmtN(dS)}</th></tr></tfoot>
+        </table></div>`;
+  }
+  html += '</body></html>';
+  
+  pWin.document.write(html);
+  pWin.document.close();
+  pWin.focus();
+  // تاخیر کوتاه برای لود شدن استایل‌ها و سپس باز کردن پنجره پرینت (ذخیره PDF)
+  setTimeout(() => { pWin.print(); pWin.close(); }, 500);
+}
+
+// ── RENDER CURRENT DAY ──
+function render(){
+  var wrap = document.getElementById('tableWrap');
+  wrap.innerHTML = '';
+  
+  // فقط رکوردهای روزی که کاربر در حال مشاهده است را جدا می‌کنیم
+  var todayRows = records.filter(r => r.date === currentDateStr);
+  var dayP = todayRows.reduce((s,r)=>s+Number(r.price||0), 0);
+  var dayS = todayRows.reduce((s,r)=>s+Number(r.profit||0), 0);
+
+  document.getElementById('todayPrice').textContent = fmtN(dayP);
+  document.getElementById('todayProfit').textContent = fmtN(dayS);
+
+  if(todayRows.length === 0){
+    wrap.innerHTML = `<div class="empty-msg"><span>📭</span>در این تاریخ رکوردی ثبت نشده است.<br>اولین فروش این روز را وارد کنید.</div>`;
+    return;
+  }
+
+  var table = document.createElement('table');
+  var thead = `<thead><tr><th>#</th><th class="name-col">اسم جنس</th><th>قیمت</th><th>سود</th><th>عملیات</th></tr></thead>`;
+  var tbody = document.createElement('tbody');
+  
+  todayRows.forEach((r, i) => {
+    var tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#aaa;font-size:11px">${toFa(i+1)}</td>
+      <td class="name-cell">${esc(r.name)}</td>
+      <td class="price-cell">${fmtN(r.price)}</td>
+      <td class="profit-cell">${fmtN(r.profit)}</td>
+      <td><button class="del-btn" onclick="openEdit(${r.id})">✏️ ویرایش</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  var tfoot = `<tfoot><tr>
+    <td colspan="2" style="text-align:right;padding-right:8px;color:#555;font-size:12px">جمع</td>
+    <td class="price-cell">${fmtN(dayP)}</td>
+    <td class="profit-cell">${fmtN(dayS)}</td>
+    <td></td>
+  </tr></tfoot>`;
+
+  table.innerHTML = thead;
+  table.appendChild(tbody);
+  table.insertAdjacentHTML('beforeend', tfoot);
+  
+  wrap.appendChild(table);
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter')addRow();});
+
+// شروع نرم‌افزار
+updateNavDisplay();
+</script>
+</body>
+</html>

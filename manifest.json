@@ -1,0 +1,16 @@
+{
+  "short_name": "دفتر فروش",
+  "name": "نرم افزار حسابداری دفتر فروش",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#1a5276",
+  "theme_color": "#1a5276",
+  "display": "standalone",
+  "orientation": "portrait"
+}
